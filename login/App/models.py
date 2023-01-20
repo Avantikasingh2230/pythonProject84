@@ -3,6 +3,9 @@ from django.db.models import Q
 import pytz
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
 from .managers import CustomUserManager
 
 
@@ -110,24 +113,30 @@ def pan_attachment(instance, filename):
 def gst_attchment(instance, filename):
     return f"files/{instance.business_name}/gst/{instance.id}_{filename}"
 
-#profile of user
+
+# profile of user
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE) # Delete profile when user is deleted
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Delete profile when user is deleted
     image = models.ImageField(default='default.jpg', upload_to='profile_pics')
 
-    def save(self):
-        super().save()
 
-        img = Image.open(self.image.path)  # Open image
+@receiver(post_save,sender= User)
+def create_user_profile(sender, instance,created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+# def save(self):
+#     super().save()
+#
+#     img = Image.open(self.image.path)  # Open image
+#
+#     # resize image
+#     if img.height > 300 or img.width > 300:
+#         output_size = (300, 300)
+#         img.thumbnail(output_size)  # Resize image
+#         img.save(self.image.path)  # Save it again and override the larger image
 
-        # resize image
-        if img.height > 300 or img.width > 300:
-            output_size = (300, 300)
-            img.thumbnail(output_size)  # Resize image
-            img.save(self.image.path)  # Save it again and override the larger image
-
-    # def __str__(self):
-    #     return f'{self.user.username} Profile' #show how we want it to be displayed
+# def __str__(self):
+#     return f'{self.user.username} Profile' #show how we want it to be displayed
 class VendorInfo(models.Model):
     # id = models.UUIDField(primary_key = True, default = uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now=True)
@@ -248,17 +257,22 @@ class Image(models.Model):
     image6 = models.ImageField(upload_to="img", default="", null=True, blank=True)
     image7 = models.ImageField(upload_to="img", default="", null=True, blank=True)
 
-#venue services
+
+# venue services
 class Venue(models.Model):
     user = models.ManyToManyField(User)
     booking_price = models.IntegerField()
     tax_rate = models.IntegerField()
     max_invitees = models.IntegerField()
+
+
 class Catering(models.Model):
     user = models.ManyToManyField(User)
     price_per_plate = models.IntegerField()
-    tax_rate= models.IntegerField()
+    tax_rate = models.IntegerField()
     discounted_price = models.IntegerField()
+
+
 class venuecateringcombined(models.Model):
     user = models.ManyToManyField(User)
     booking_price = models.IntegerField()
@@ -267,6 +281,7 @@ class venuecateringcombined(models.Model):
     tax_rate = models.IntegerField()
     discounted_price = models.IntegerField()
 
+
 # display image on homepage
 class displayImage(models.Model):
     user = models.ManyToManyField(User)
@@ -274,7 +289,9 @@ class displayImage(models.Model):
     Image2 = models.ImageField(upload_to="dimg", default="", null=False, blank=False)
     Image3 = models.ImageField(upload_to="dimg", default="", null=False, blank=False)
     Image4 = models.ImageField(upload_to="dimg", default="", null=False, blank=False)
-#music services
+
+
+# music services
 class dj(models.Model):
     user = models.ManyToManyField(User)
 
@@ -282,11 +299,15 @@ class dj(models.Model):
     tax_rate = models.IntegerField()
     total_hour = models.IntegerField()
     discount_rate = models.IntegerField()
+
+
 class dhol(models.Model):
     user = models.ManyToManyField(User)
     price_of_1_dhol = models.IntegerField()
     tax_rate = models.IntegerField()
     discount_rate = models.IntegerField()
+
+
 class musicall(models.Model):
     user = models.ManyToManyField(User)
     Booking_price = models.IntegerField()
@@ -296,28 +317,32 @@ class musicall(models.Model):
     discount_rate = models.IntegerField()
 
 
-#camera services
+# camera services
 class portpolio_package(models.Model):
     user = models.ManyToManyField(User)
     package_name = models.CharField(max_length=200, default=False)
     package_intro = models.TextField(default=False)
     package_price = models.IntegerField(default=False)
-    location = models.CharField(max_length=500,default=True)
+    location = models.CharField(max_length=500, default=True)
     duration = models.IntegerField(default=True)
     indoor_outdoor_shoot = models.TextField(max_length=500, default=True)
-    styling_makeup= models.TextField(default=True)
+    styling_makeup = models.TextField(default=True)
     costume = models.TextField(default=True)
     intro_video = models.CharField(default=True, max_length=1000)
     portpolio_book = models.CharField(default=True, max_length=200)
     poster_size_print = models.CharField(default=True, max_length=500)
     comp_card = models.CharField(default=True, max_length=500)
     visiting_card_of_model = models.CharField(default=True, max_length=100)
+
+
 class Engagement(models.Model):
     user = models.ManyToManyField(User)
     package_price = models.IntegerField()
     package_description = models.TextField()
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
+
+
 class prewedding(models.Model):
     user = models.ManyToManyField(User)
 
@@ -326,12 +351,15 @@ class prewedding(models.Model):
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
 
+
 class wedding(models.Model):
     user = models.ManyToManyField(User)
     package_price = models.IntegerField()
     package_description = models.TextField()
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
+
+
 class combined(models.Model):
     user = models.ManyToManyField(User)
     package_price = models.IntegerField()
@@ -339,7 +367,8 @@ class combined(models.Model):
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
 
-#makeup services
+
+# makeup services
 class engmakeup(models.Model):
     user = models.ManyToManyField(User)
     package_price = models.IntegerField()
@@ -347,45 +376,61 @@ class engmakeup(models.Model):
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
 
+
 class preweddingmakeup(models.Model):
     user = models.ManyToManyField(User)
     package_price = models.IntegerField()
     package_description = models.TextField()
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
+
+
 class weddingmakeup(models.Model):
     user = models.ManyToManyField(User)
     package_price = models.IntegerField()
     package_description = models.TextField()
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
+
+
 class allmakeup(models.Model):
     user = models.ManyToManyField(User)
     package_price = models.IntegerField()
     package_description = models.TextField()
     discounted_price = models.IntegerField()
     tax_rate = models.IntegerField()
-#food services
+
+
+# food services
 class food_per_plate(models.Model):
     price_per_plate = models.IntegerField()
     tax_rate = models.IntegerField()
     discount_rate = models.IntegerField()
+
+
 class catering_without_material(models.Model):
     price_per_25person = models.IntegerField()
     tax_rate = models.IntegerField()
     discount_rate = models.IntegerField()
+
+
 class catering_with_material(models.Model):
     price_per_25person = models.IntegerField()
     tax_rate = models.IntegerField()
     discount_rate = models.IntegerField()
+
+
 class Notification(models.Model):
-    user= models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     notification = models.TextField()
     is_seen = models.BooleanField(default=False)
+
     def save(self, *args, **kwars):
         print('save called')
         super(Notification, self).save(*args, **kwars)
-#chat
+
+
+# chat
 class ThreadManager(models.Manager):
     def by_user(self, **kwargs):
         user = kwargs.get('user')
@@ -395,19 +440,22 @@ class ThreadManager(models.Manager):
 
 
 class Thread(models.Model):
-    first_person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='thread_first_person')
+    first_person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True,
+                                     related_name='thread_first_person')
     second_person = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True,
-                                     related_name='thread_second_person')
+                                      related_name='thread_second_person')
     updated = models.DateTimeField(auto_now=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     objects = ThreadManager()
+
     class Meta:
         unique_together = ['first_person', 'second_person']
 
 
 class ChatMessage(models.Model):
-    thread = models.ForeignKey(Thread, null=True, blank=True, on_delete=models.CASCADE, related_name='chatmessage_thread')
+    thread = models.ForeignKey(Thread, null=True, blank=True, on_delete=models.CASCADE,
+                               related_name='chatmessage_thread')
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
